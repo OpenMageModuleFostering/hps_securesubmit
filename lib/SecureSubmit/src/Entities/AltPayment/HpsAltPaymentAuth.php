@@ -1,6 +1,6 @@
 <?php
 
-class HpsAltPaymentAuth extends HpsAuthorization
+class HpsAltPaymentAuth extends HpsAltPaymentResponse
 {
     public $status = null;
     public $statusMessage = null;

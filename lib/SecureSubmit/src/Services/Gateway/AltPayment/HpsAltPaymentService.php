@@ -36,7 +36,7 @@ class HpsAltPaymentService extends HpsSoapGatewayService
 
         $xml = new DOMDocument();
         $transaction = $xml->createElement('hps:Transaction');
-        $capture = $xml->createElement('hps:AltPaymentAddToBatch');
+        $capture = $xml->createElement('hps:AltPaymentCapture');
 
         $capture->appendChild($xml->createElement('hps:TransactionType', $this->_transactionType));
         $capture->appendChild($xml->createElement('hps:GatewayTxnId', $transactionId));
@@ -50,7 +50,7 @@ class HpsAltPaymentService extends HpsSoapGatewayService
 
         $capture->appendChild($payment);
         $transaction->appendChild($capture);
-        return $this->_submitTransaction($transaction, 'AltPaymentAddToBatch');
+        return $this->_submitTransaction($transaction, 'AltPaymentCapture');
     }
 
     public function createSession($amount, $currency, HpsBuyerData $buyer, HpsPaymentData $payment, HpsShippingInfo $shippingAddress = null, $lineItems = null)
@@ -155,6 +155,18 @@ class HpsAltPaymentService extends HpsSoapGatewayService
     public function setTransactionType($type)
     {
         $this->_transactionType = $type;
+    }
+
+    public function status($transactionId)
+    {
+        $xml = new DOMDocument();
+        $transaction = $xml->createElement('hps:Transaction');
+        $status = $xml->createElement('hps:GetTransactionStatus');
+
+        $status->appendChild($xml->createElement('hps:GatewayTxnId', $transactionId));
+
+        $transaction->appendChild($status);
+        return $this->_submitTransaction($transaction, 'GetTransactionStatus');
     }
 
     protected function hydrateBuyerData(HpsBuyerData $buyer, DOMDocument $xml)
@@ -284,6 +296,14 @@ class HpsAltPaymentService extends HpsSoapGatewayService
         if ($item != null) {
             $responseCode = (isset($item->RspCode) ? $item->RspCode : null);
             $responseMessage = (isset($item->RspMessage) ? $item->RspMessage : null);
+
+            if ($responseCode == null && isset($item->TransactionStatus->RspCode)) {
+                $responseCode = $item->TransactionStatus->RspCode;
+            }
+            if ($responseMessage == null && isset($item->TransactionStatus->RspText)) {
+                $responseMessage = $item->TransactionStatus->RspText;
+            }
+
             HpsProcessorResponseValidation::checkResponse($transactionId, $responseCode, $responseMessage, $item);
         }
     }
@@ -291,7 +311,7 @@ class HpsAltPaymentService extends HpsSoapGatewayService
     private function _submitTransaction($transaction, $txnType, $clientTxnId = null, $cardData = null)
     {
         try {
-            $response = $this->doTransaction($transaction, $clientTxnId);
+            $response = $this->doRequest($transaction, $clientTxnId);
         } catch (HpsException $e) {
             if ($e->innerException != null && $e->innerException->getMessage() == 'gateway_time-out') {
                 // if (in_array($txnType, array('CreditSale', 'CreditAuth'))) {
@@ -323,8 +343,8 @@ class HpsAltPaymentService extends HpsSoapGatewayService
             case 'AltPaymentAuth':
                 $rvalue = HpsAltPaymentAuth::fromDict($response, $txnType);
                 break;
-            case 'AltPaymentAddToBatch':
-                $rvalue = HpsAltPaymentAddToBatch::fromDict($response, $txnType);
+            case 'AltPaymentCapture':
+                $rvalue = HpsAltPaymentCapture::fromDict($response, $txnType);
                 break;
             case 'AltPaymentReturn':
                 $rvalue = HpsAltPaymentReturn::fromDict($response, $txnType);
@@ -332,6 +352,8 @@ class HpsAltPaymentService extends HpsSoapGatewayService
             case 'AltPaymentVoid':
                 $rvalue = HpsAltPaymentVoid::fromDict($response, $txnType);
                 break;
+            case 'GetTransactionStatus':
+                $rvalue = HpsTransactionStatus::fromDict($response, $txnType);
             default:
                 break;
         }

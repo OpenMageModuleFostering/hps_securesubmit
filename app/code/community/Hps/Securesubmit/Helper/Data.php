@@ -1,4 +1,11 @@
 <?php
+/**
+ * @category   Hps
+ * @package    Hps_Securesubmit
+ * @copyright  Copyright (c) 2015 Heartland Payment Systems (https://www.magento.com)
+ * @license    https://github.com/SecureSubmit/heartland-magento-extension/blob/master/LICENSE  Custom License
+ */
+
 class Hps_Securesubmit_Helper_Data extends Mage_Core_Helper_Abstract
 {
     const XML_PATH_PAYMENT_HPS_SECURESUBMIT_USE_HTTP_PROXY  = 'payment/hps_securesubmit/use_http_proxy';
@@ -16,14 +23,24 @@ class Hps_Securesubmit_Helper_Data extends Mage_Core_Helper_Abstract
         return $cardCollection;
     }
 
-    public function saveMultiToken($token,$cardData,$cardType)
+    /**
+     * @param string        $token
+     * @param HpsCreditCard $cardData
+     * @param string        $cardType
+     * @param integer|null  $customerId
+     * @return Hps_Securesubmit_Model_Storedcard
+     */
+    public function saveMultiToken($token,$cardData,$cardType, $customerId = null)
     {
         $_session = Mage::getSingleton('customer/session');
         $_loggedIn = $_session->isLoggedIn();
 
-        if($_loggedIn){
-            $_customerId = $_session->getCustomer()->getId();
-
+        if($_loggedIn || $customerId != null){
+            if($customerId == null){
+                $_customerId = $_session->getCustomer()->getId();
+            }else{
+                $_customerId = $customerId;
+            }
             $storedCard = Mage::getModel('hps_securesubmit/storedcard');
             $storedCard->setDt(Varien_Date::now())
                 ->setCustomerId($_customerId)

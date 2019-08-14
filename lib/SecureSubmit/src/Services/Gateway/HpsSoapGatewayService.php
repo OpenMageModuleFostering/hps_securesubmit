@@ -1,8 +1,8 @@
 <?php
 
-class HpsSoapGatewayService extends HpsGatewayServiceAbstract
+class HpsSoapGatewayService extends HpsGatewayServiceAbstract implements HpsGatewayServiceInterface
 {
-    public function doTransaction($transaction, $clientTransactionId = null)
+    public function doRequest($transaction, $options = array())
     {
         $xml = new DOMDocument('1.0', 'utf-8');
         $soapEnvelope = $xml->createElement('soapenv:Envelope');
@@ -29,8 +29,8 @@ class HpsSoapGatewayService extends HpsGatewayServiceAbstract
             $hpsHeader->appendChild($xml->createElement('hps:VersionNbr', $this->_config->versionNumber));
             $hpsHeader->appendChild($xml->createElement('hps:SiteTrace', $this->_config->siteTrace));
         }
-        if ($clientTransactionId != null) {
-            $hpsHeader->appendChild($xml->createElement('hps:ClientTxnId', $clientTransactionId));
+        if (isset($options['clientTransactionId'])) {
+            $hpsHeader->appendChild($xml->createElement('hps:ClientTxnId', $options['clientTransactionId']));
         }
 
         $hpsVersion->appendChild($hpsHeader);
@@ -50,14 +50,14 @@ class HpsSoapGatewayService extends HpsGatewayServiceAbstract
             'Content-length: '.strlen($xml->saveXML()),
         );
         $data = $xml->saveXML();
-        Mage::log($data);
+        // print "\n" . $data;
 
         return $this->submitRequest($url, $header, $data);
     }
 
-    protected function processResponse($curlResponse, $curlInfo, $curlError)
+    public function processResponse($curlResponse, $curlInfo, $curlError)
     {
-        Mage::log($curlResponse);
+        // print "\n" . $curlResponse;
         switch ($curlInfo['http_code']) {
             case '200':
                 $responseObject = $this->_XML2Array($curlResponse);
@@ -74,7 +74,7 @@ class HpsSoapGatewayService extends HpsGatewayServiceAbstract
         }
     }
 
-    protected function _hydrateAdditionalTxnFields($details, DOMDocument $xml)
+    public function _hydrateAdditionalTxnFields($details, DOMDocument $xml)
     {
         $additionalTxnFields = $xml->createElement('hps:AdditionalTxnFields');
 
@@ -93,7 +93,7 @@ class HpsSoapGatewayService extends HpsGatewayServiceAbstract
         return $additionalTxnFields;
     }
 
-    protected function _hydrateCardHolderData(HpsCardHolder $cardHolder, DOMDocument $xml)
+    public function _hydrateCardHolderData(HpsCardHolder $cardHolder, DOMDocument $xml)
     {
         $cardHolderData = $xml->createElement('hps:CardHolderData');
         $cardHolderData->appendChild($xml->createElement('hps:CardHolderFirstName', $cardHolder->firstName));
@@ -108,7 +108,7 @@ class HpsSoapGatewayService extends HpsGatewayServiceAbstract
         return $cardHolderData;
     }
 
-    protected function _hydrateCheckData(HpsCheck $check, DOMDocument $xml)
+    public function _hydrateCheckData(HpsCheck $check, DOMDocument $xml)
     {
         $checkData = $xml->createElement('hps:AccountInfo');
 
@@ -135,7 +135,7 @@ class HpsSoapGatewayService extends HpsGatewayServiceAbstract
         return $checkData;
     }
 
-    protected function _hydrateConsumerInfo(HpsCheck $check, DOMDocument $xml)
+    public function _hydrateConsumerInfo(HpsCheck $check, DOMDocument $xml)
     {
         $consumerInfo = $xml->createElement('hps:ConsumerInfo');
 
@@ -178,20 +178,37 @@ class HpsSoapGatewayService extends HpsGatewayServiceAbstract
             $consumerInfo->appendChild($xml->createElement('hps:PhoneNumber', $check->checkHolder->phone));
         }
 
+        if ($check->checkHolder->ssl4 != null || $check->checkHolder->dobYear != null) {
+            $identityInfo = $xml->createElement('hps:IdentityInfo');
+            if ($check->checkHolder->ssl4 != null) {
+                $identityInfo->appendChild($xml->createElement('hps:SSNL4', $check->checkHolder->ssl4));
+            }
+            if ($check->checkHolder->dobYear != null) {
+                $identityInfo->appendChild($xml->createElement('hps:DOBYear', $check->checkHolder->dobYear));
+            }
+            $consumerInfo->appendChild($identityInfo);
+        }
+
         return $consumerInfo;
     }
 
-    protected function _hydrateCPCData(HpsCPCData $cpcData, DOMDocument $xml)
+    public function _hydrateCPCData(HpsCPCData $cpcData, DOMDocument $xml)
     {
         $cpcDataElement = $xml->createElement('hps:CPCData');
-        $cpcDataElement->appendChild($xml->createElement('hps:CardHolderPONbr', $cpcData->CardHolderPONbr));
-        $cpcDataElement->appendChild($xml->createElement('hps:TaxAmt', $cpcData->TaxAmt));
-        $cpcDataElement->appendChild($xml->createElement('hps:TaxType', $cpcData->TaxType));
+        if (isset($cpcData->cardHolderPONbr)) {
+            $cpcDataElement->appendChild($xml->createElement('hps:CardHolderPONbr', $cpcData->cardHolderPONbr));
+        }
+        if (isset($cpcData->taxAmt)) {
+            $cpcDataElement->appendChild($xml->createElement('hps:TaxAmt', $cpcData->taxAmt));
+        }
+        if (isset($cpcData->taxType)) {
+            $cpcDataElement->appendChild($xml->createElement('hps:TaxType', $cpcData->taxType));
+        }
 
         return $cpcDataElement;
     }
 
-    protected function _hydrateDirectMarketData(HpsDirectMarketData $data, DOMDocument $xml)
+    public function _hydrateDirectMarketData(HpsDirectMarketData $data, DOMDocument $xml)
     {
         $directMktDataElement = $xml->createElement('hps:DirectMktData');
         $directMktDataElement->appendChild($xml->createElement('hps:DirectMktInvoiceNbr', $data->invoiceNumber));
@@ -201,7 +218,7 @@ class HpsSoapGatewayService extends HpsGatewayServiceAbstract
         return $directMktDataElement;
     }
 
-    protected function _hydrateEncryptionData(HpsEncryptionData $encryptionData, DOMDocument $xml)
+    public function _hydrateEncryptionData(HpsEncryptionData $encryptionData, DOMDocument $xml)
     {
         $encData = $xml->createElement('hps:EncryptionData');
         if ($encryptionData->encryptedTrackNumber != null) {
@@ -213,23 +230,31 @@ class HpsSoapGatewayService extends HpsGatewayServiceAbstract
         return $encData;
     }
 
-    protected function _hydrateGiftCardData(HpsGiftCard $giftCard, DOMDocument $xml, $elementName = 'CardData')
+    public function _hydrateGiftCardData(HpsGiftCard $giftCard, DOMDocument $xml, $elementName = 'CardData')
     {
         $giftCardData = $xml->createElement('hps:'.$elementName);
-        if ($giftCard->isTrackData == true) {
-            $giftCardData->appendChild($xml->createElement('hps:TrackData', $giftCard->number));
-        } else {
+        if ($giftCard->number != null) {
             $giftCardData->appendChild($xml->createElement('hps:CardNbr', $giftCard->number));
+        } else if ($giftCard->trackData != null) {
+            $giftCardData->appendChild($xml->createElement('hps:TrackData', $giftCard->trackData));
+        } else if ($giftCard->alias != null) {
+            $giftCardData->appendChild($xml->createElement('hps:Alias', $giftCard->alias));
+        } else if ($giftCard->tokenValue != null) {
+            $giftCardData->appendChild($xml->createElement('hps:TokenValue', $giftCard->tokenValue));
         }
 
         if ($giftCard->encryptionData != null) {
             $giftCardData->appendChild($this->_hydrateEncryptionData($giftCard->encryptionData, $xml));
         }
 
+        if ($giftCard->pin != null) {
+            $giftCardData->appendChild($xml->createElement('hps:PIN', $giftCard->pin));
+        }
+
         return $giftCardData;
     }
 
-    protected function _hydrateManualEntry(HpsCreditCard $card, DOMDocument $xml)
+    public function _hydrateManualEntry(HpsCreditCard $card, DOMDocument $xml, $cardPresent = false, $readerPresent = false)
     {
         $manualEntry = $xml->createElement('hps:ManualEntry');
 
@@ -249,21 +274,61 @@ class HpsSoapGatewayService extends HpsGatewayServiceAbstract
             $manualEntry->appendChild($xml->createElement('hps:CVV2', $card->cvv));
         }
 
-        $manualEntry->appendChild($xml->createElement('hps:CardPresent', 'N'));
-        $manualEntry->appendChild($xml->createElement('hps:ReaderPresent', 'N'));
+        $manualEntry->appendChild($xml->createElement('hps:CardPresent', ($cardPresent ? 'Y' : 'N')));
+        $manualEntry->appendChild($xml->createElement('hps:ReaderPresent', ($readerPresent ? 'Y' : 'N')));
 
         return $manualEntry;
+    }
+
+    public function _hydrateSecureEcommerce($paymentData, $xml)
+    {
+        $secureEcommerce = $xml->createElement('hps:SecureECommerce');
+        $secureEcommerce->appendChild($xml->createElement('hps:TypeOfPaymentData', $paymentData->secure3d));
+
+        $paymentDataElement = $xml->createElement('hps:PaymentData', $paymentData->onlinePaymentCryptogram);
+        $paymentDataElementEncoding = $xml->createAttribute('encoding');
+        $paymentDataElementEncoding->value = 'base64';
+        $paymentDataElement->appendChild($paymentDataElementEncoding);
+
+        if ($paymentData->eciIndicator != null && $paymentData->eciIndicator != '') {
+            $secureEcommerce->appendChild($xml->createElement('hps:ECommerceIndicator', $paymentData->eciIndicator));
+        }
+
+        return $secureEcommerce;
+    }
+
+    public function _hydrateTokenData($token, DOMDocument $xml, $cardPresent = false, $readerPresent = false)
+    {
+        if (!$token instanceof HpsTokenData) {
+            $token = new HpsTokenData();
+            $token->tokenValue = $token;
+        }
+
+        $tokenData = $xml->createElement('hps:TokenData');
+        $tokenData->appendChild($xml->createElement('hps:TokenValue', $token->tokenValue));
+        $tokenData->appendChild($xml->createElement('hps:CardPresent', ($cardPresent ? 'Y' : 'N')));
+        $tokenData->appendChild($xml->createElement('hps:ReaderPresent', ($readerPresent ? 'Y' : 'N')));
+        return $tokenData;
+    }
+
+    public function _hydrateTrackData(HpsTrackData $trackData, $xml)
+    {
+        $trackDataElement = $xml->createElement('hps:TrackData', $trackData->value);
+        $trackDataElementMethod = $xml->createAttribute('method');
+        $trackDataElementMethod->value = $trackData->method;
+        $trackDataElement->appendChild($trackDataElementMethod);
+        return $trackDataElement;
     }
 
     private function _gatewayUrlForKey()
     {
         if ($this->_config->secretApiKey != null && $this->_config->secretApiKey != "") {
             if (strpos($this->_config->secretApiKey, '_cert_') !== false) {
-                return "https://posgateway.cert.secureexchange.net/Hps.Exchange.PosGateway/PosGatewayService.asmx";
+                return "https://cert.api2.heartlandportico.com/Hps.Exchange.PosGateway/PosGatewayService.asmx";
             } else if (strpos($this->_config->secretApiKey, '_uat_') !== false) {
                 return "https://posgateway.uat.secureexchange.net/Hps.Exchange.PosGateway/PosGatewayService.asmx";
             } else {
-                return "https://posgateway.secureexchange.net/Hps.Exchange.PosGateway/PosGatewayService.asmx";
+                return "https://api2.heartlandportico.com/Hps.Exchange.PosGateway/PosGatewayService.asmx";
             }
         } else {
             return $this->_config->soapServiceUri;

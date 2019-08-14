@@ -1,10 +1,7 @@
 <?php
 
-class HpsServicesConfig
+class HpsServicesConfig implements HpsConfigInterface
 {
-    const KEY_TYPE_SECRET   = 'secret';
-    const KEY_TYPE_PUBLIC   = 'public';
-    const KEY_TYPE_UNKNOWN  = 'unknown';
     public $credentialToken = null;
     public $secretApiKey    = null;
     public $publicApiKey    = null;
@@ -18,7 +15,7 @@ class HpsServicesConfig
     public $siteTrace       = null;
     public $useProxy        = null;
     public $proxyOptions    = null;
-    public $soapServiceUri  = "https://posgateway.cert.secureexchange.net/Hps.Exchange.PosGateway/PosGatewayService.asmx";
+    public $soapServiceUri  = "https://cert.api2.heartlandportico.com/Hps.Exchange.PosGateway/PosGatewayService.asmx";
     public $payPlanBaseUri  = null;
 
     public function serviceUri()
@@ -31,11 +28,10 @@ class HpsServicesConfig
         $this->soapServiceUri = $value;
     }
 
-    public function validateApiKey($keyType)
+    public function validate($keyType)
     {
-        return true;
-        // return ($keyType == self::KEY_TYPE_PUBLIC && $this->validatePublicApiKey())
-        //     || ($keyType == self::KEY_TYPE_SECRET && $this->validateSecretApiKey());
+        return ($keyType == self::KEY_TYPE_PUBLIC && $this->validatePublicApiKey())
+            || ($keyType == self::KEY_TYPE_SECRET && $this->validateSecretApiKey());
     }
 
     public function getKeyType($keyType)

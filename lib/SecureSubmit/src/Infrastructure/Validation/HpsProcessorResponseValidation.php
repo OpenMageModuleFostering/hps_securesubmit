@@ -17,7 +17,7 @@ class HpsProcessorResponseValidation
         $code = null;
         $message = null;
 
-        if ($responseCode == '0') {
+        if ($responseCode == '00') {
             return null;
         }
 

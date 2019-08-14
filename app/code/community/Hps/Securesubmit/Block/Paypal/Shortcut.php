@@ -69,23 +69,6 @@ class Hps_Securesubmit_Block_Paypal_Shortcut extends Mage_Core_Block_Template
 
         // check visibility on cart or product page
         $context = $isInCatalog ? 'visible_on_product' : 'visible_on_cart';
-        // if (!$config->$context) {
-        //     $this->_shouldRender = false;
-        //     return $result;
-        // }
-
-        // if ($isInCatalog) {
-        //     /** @var Mage_Catalog_Model_Product $currentProduct */
-        //     $currentProduct = Mage::registry('current_product');
-        //     if (!is_null($currentProduct)) {
-        //         $price = (float)$currentProduct->getFinalPrice();
-        //         $typeInstance = $currentProduct->getTypeInstance();
-        //         if (empty($price) && !$currentProduct->isSuper() && !$typeInstance->canConfigure($currentProduct)) {
-        //             $this->_shouldRender = false;
-        //             return $result;
-        //         }
-        //     }
-        // }
 
         // validate minimum quote amount and validate quote for zero grandtotal
         if (null !== $quote && (!$quote->validateMinimumAmount()
@@ -107,21 +90,7 @@ class Hps_Securesubmit_Block_Paypal_Shortcut extends Mage_Core_Block_Template
 
         $this->_getBmlShortcut($quote);
 
-        // use static image if in catalog
-        // if ($isInCatalog || null === $quote) {
-        //     $this->setImageUrl($config->getExpressCheckoutShortcutImageUrl(Mage::app()->getLocale()->getLocaleCode()));
-        // } else {
-            $this->setImageUrl('https://www.paypalobjects.com/webstatic/en_US/i/buttons/checkout-logo-medium.png');
-        // }
-
-        // // ask whether to create a billing agreement
-        // $customerId = Mage::getSingleton('customer/session')->getCustomerId(); // potential issue for caching
-        // if (Mage::helper('paypal')->shouldAskToCreateBillingAgreement($config, $customerId)) {
-        //     $this->setConfirmationUrl($this->getUrl($this->_startAction,
-        //         array(Hps_Securesubmit_Model_Paypal_Checkout::PAYMENT_INFO_TRANSPORT_BILLING_AGREEMENT => 1)
-        //     ));
-        //     $this->setConfirmationMessage(Mage::helper('paypal')->__('Would you like to sign a billing agreement to streamline further purchases with PayPal?'));
-        // }
+        $this->setImageUrl('https://www.paypalobjects.com/webstatic/en_US/i/buttons/checkout-logo-medium.png');
 
         return $result;
     }
@@ -133,7 +102,7 @@ class Hps_Securesubmit_Block_Paypal_Shortcut extends Mage_Core_Block_Template
      */
     protected function _getBmlShortcut($quote)
     {
-        $bml = Mage::helper('payment')->getMethodInstance('hps_paypal_bml');
+        $bml = Mage::helper('payment')->getMethodInstance('hps_paypal_credit');
         $isBmlEnabled = $bml && $bml->isAvailable($quote);
         $this->setBmlShortcutHtmlId($this->helper('core')->uniqHash('hps_shortcut_bml_'))
             ->setBmlCheckoutUrl($this->getUrl('securesubmit/paypal/credit/button/1'))
@@ -141,7 +110,7 @@ class Hps_Securesubmit_Block_Paypal_Shortcut extends Mage_Core_Block_Template
             ->setMarketMessage('https://www.paypalobjects.com/webstatic/en_US/btn/btn_bml_text.png')
             ->setMarketMessageUrl('https://www.securecheckout.billmelater.com/paycapture-content/'
                 . 'fetch?hash=AU826TU8&content=/bmlweb/ppwpsiw.html')
-            ->setIsBmlEnabled(true);
+            ->setIsBmlEnabled(Mage::getStoreConfig('payment/hps_paypal_credit/active'));
         return $this;
     }
 

@@ -17,7 +17,7 @@ Using Composer? Require this library in your `composer.json`:
 ```json
 {
     "require": {
-        "securesubmit/heartland-php": "*"
+        "hps/heartland-php": "*"
     }
 }
 ```

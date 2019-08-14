@@ -1,6 +1,6 @@
 <?php
 
-class HpsAltPaymentCreateSession extends HpsAuthorization
+class HpsAltPaymentCreateSession extends HpsAltPaymentResponse
 {
     public $sessionId   = null;
     public $redirectUrl = null;
@@ -18,14 +18,5 @@ class HpsAltPaymentCreateSession extends HpsAuthorization
         $session->redirectUrl = isset($pairs['RedirectUrl']) ? $pairs['RedirectUrl'] : null;
 
         return $session;
-    }
-
-    protected static function nvpToArray($pairs)
-    {
-        $array = array();
-        foreach ($pairs->NameValuePair as $pair) {
-            $array[(string)$pair->Name] = (string)$pair->Value;
-        }
-        return $array;
     }
 }

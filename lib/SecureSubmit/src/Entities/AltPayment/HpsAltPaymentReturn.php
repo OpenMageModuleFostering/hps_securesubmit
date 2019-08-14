@@ -1,5 +1,5 @@
 <?php
 
-class HpsAltPaymentReturn extends HpsAuthorization
+class HpsAltPaymentReturn extends HpsAltPaymentResponse
 {
 }

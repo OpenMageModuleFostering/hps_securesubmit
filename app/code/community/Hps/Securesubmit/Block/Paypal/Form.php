@@ -18,28 +18,19 @@ class Hps_Securesubmit_Block_Paypal_Form extends Mage_Payment_Block_Form
     protected $_methodCode = 'hps_paypal';
 
     /**
-     * Config model instance
-     *
-     * @var Hps_Securesubmit_Model_Config
-     */
-    protected $_config;
-
-    /**
      * Set template and redirect message
      */
     protected function _construct()
     {
-        $this->_config = Mage::getModel('paypal/config')->setMethod($this->getMethodCode());
-        $locale = Mage::app()->getLocale();
         $mark = Mage::getConfig()->getBlockClassName('core/template');
         $mark = new $mark;
         $mark->setTemplate('paypal/payment/mark.phtml')
-            ->setPaymentAcceptanceMarkHref($this->_config->getPaymentMarkWhatIsPaypalUrl($locale))
-            ->setPaymentAcceptanceMarkSrc($this->_config->getPaymentMarkImageUrl($locale->getLocaleCode()))
+            ->setPaymentAcceptanceMarkHref('https://www.paypal.com/us/cgi-bin/webscr?cmd=xpt/Marketing/popup/OLCWhatIsPayPal-outside')
+            ->setPaymentAcceptanceMarkSrc('https://www.paypalobjects.com/webstatic/en_US/i/buttons/pp-acceptance-medium.png')
         ; // known issue: code above will render only static mark image
         $this->setTemplate('paypal/payment/redirect.phtml')
             ->setRedirectMessage(
-                Mage::helper('paypal')->__('You will be redirected to the PayPal website.')
+                Mage::helper('hps_securesubmit')->__('You will be redirected to the PayPal website.')
             )
             ->setMethodTitle('') // Output PayPal mark, omit title
             ->setMethodLabelAfterHtml($mark->toHtml())

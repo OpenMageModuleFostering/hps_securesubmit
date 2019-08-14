@@ -36,7 +36,7 @@ class HpsGiftCardActivate extends HpsTransaction
         $activation->transactionId = (string)$rsp->Header->GatewayTxnId;
         $activation->authorizationCode = (isset($activationRsp->AuthCode) ? (string)$activationRsp->AuthCode : null);
         $activation->balanceAmount = (isset($activationRsp->BalanceAmt) ? (string)$activationRsp->BalanceAmt : null);
-        $activation->pointsBalanceAmount = (isset($activationRsp->PointsBalanceAmount) ? (string)$activationRsp->PointsBalanceAmount : null);
+        $activation->pointsBalanceAmount = (isset($activationRsp->PointsBalanceAmt) ? (string)$activationRsp->PointsBalanceAmt : null);
         $activation->rewards = (isset($activationRsp->Rewards) ? (string)$activationRsp->Rewards : null);
         $activation->notes = (isset($activationRsp->Notes) ? (string)$activationRsp->Notes : null);
         $activation->responseCode = (isset($activationRsp->RspCode) ? (string)$activationRsp->RspCode : null);

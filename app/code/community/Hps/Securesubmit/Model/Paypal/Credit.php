@@ -9,7 +9,7 @@
 /**
  * PayPal Credit method
  */
-class Hps_Sescuresubmit_Model_Paypal_Credit extends Hps_Securesubmit_Model_Paypal
+class Hps_Securesubmit_Model_Paypal_Credit extends Hps_Securesubmit_Model_Paypal
 {
     /**
      * Payment method code
@@ -33,5 +33,11 @@ class Hps_Sescuresubmit_Model_Paypal_Credit extends Hps_Securesubmit_Model_Paypa
     public function getCheckoutRedirectUrl()
     {
         return Mage::getUrl('securesubmit/paypal/credit');
+    }
+
+    public function isAvailable($quote = null)
+    {
+        return Mage::getStoreConfig('payment/hps_paypal_credit/active')
+            && parent::isAvailable($quote);
     }
 }

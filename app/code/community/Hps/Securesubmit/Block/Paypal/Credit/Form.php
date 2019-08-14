@@ -9,7 +9,7 @@
 /**
  * PayPal Credit payment form
  */
-class Hps_Securesubmit_Block_Credit_Form extends Hps_Securesubmit_Block_Paypal_Form
+class Hps_Securesubmit_Block_Paypal_Credit_Form extends Hps_Securesubmit_Block_Paypal_Form
 {
     /**
      * Payment method code
@@ -33,7 +33,7 @@ class Hps_Securesubmit_Block_Credit_Form extends Hps_Securesubmit_Block_Paypal_F
             ->setPaymentWhatIs('See terms');
         $this->setTemplate('paypal/payment/redirect.phtml')
             ->setRedirectMessage(
-                Mage::helper('paypal')->__('You will be redirected to the PayPal website.')
+                Mage::helper('hps_securesubmit')->__('You will be redirected to the PayPal website.')
             )
             ->setMethodTitle('') // Output PayPal mark, omit title
             ->setMethodLabelAfterHtml($mark->toHtml());

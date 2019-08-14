@@ -71,7 +71,11 @@ class HpsCreditService extends HpsSoapGatewayService
         }
 
         $hpsTransaction->appendChild($hpsCreditAddToBatch);
-        $response = $this->doTransaction($hpsTransaction);
+        $options = array();
+        if ($clientTransactionId != null) {
+            $options['clientTransactionId'] = $clientTransactionId;
+        }
+        $response = $this->doRequest($hpsTransaction, $options);
         $this->_processChargeGatewayResponse($response, 'CreditAddToBatch');
 
         return $this->get($transactionId);
@@ -176,9 +180,9 @@ class HpsCreditService extends HpsSoapGatewayService
     {
         $xml = new DOMDocument();
         $hpsTransaction = $xml->createElement('hps:Transaction');
-          $hpsPosCreditCPCEdit = $xml->createElement('hps:CreditCPCEdit');
-            $hpsPosCreditCPCEdit->appendChild($xml->createElement('hps:GatewayTxnId', $transactionId));
-            $hpsPosCreditCPCEdit->appendChild($this->_hydrateCPCData($cpcData, $xml));
+        $hpsPosCreditCPCEdit = $xml->createElement('hps:CreditCPCEdit');
+        $hpsPosCreditCPCEdit->appendChild($xml->createElement('hps:GatewayTxnId', $transactionId));
+        $hpsPosCreditCPCEdit->appendChild($this->_hydrateCPCData($cpcData, $xml));
         $hpsTransaction->appendChild($hpsPosCreditCPCEdit);
 
         return $this->_submitTransaction($hpsTransaction, 'CreditCPCEdit');
@@ -236,9 +240,9 @@ class HpsCreditService extends HpsSoapGatewayService
 
         $xml = new DOMDocument();
         $hpsTransaction = $xml->createElement('hps:Transaction');
-          $hpsReportActivity = $xml->createElement('hps:ReportActivity');
-            $hpsReportActivity->appendChild($xml->createElement('hps:RptStartUtcDT', $startDate));
-            $hpsReportActivity->appendChild($xml->createElement('hps:RptEndUtcDT', $endDate));
+        $hpsReportActivity = $xml->createElement('hps:ReportActivity');
+        $hpsReportActivity->appendChild($xml->createElement('hps:RptStartUtcDT', $startDate));
+        $hpsReportActivity->appendChild($xml->createElement('hps:RptEndUtcDT', $endDate));
         $hpsTransaction->appendChild($hpsReportActivity);
 
         return $this->_submitTransaction($hpsTransaction, 'ReportActivity');
@@ -350,8 +354,8 @@ class HpsCreditService extends HpsSoapGatewayService
     {
         $xml = new DOMDocument();
         $hpsTransaction = $xml->createElement('hps:Transaction');
-          $hpsCreditVoid = $xml->createElement('hps:CreditVoid');
-          $hpsCreditVoid->appendChild($xml->createElement('hps:GatewayTxnId', $transactionId));
+        $hpsCreditVoid = $xml->createElement('hps:CreditVoid');
+        $hpsCreditVoid->appendChild($xml->createElement('hps:GatewayTxnId', $transactionId));
         $hpsTransaction->appendChild($hpsCreditVoid);
 
         return $this->_submitTransaction($hpsTransaction, 'CreditVoid', $clientTransactionId);
@@ -422,8 +426,13 @@ class HpsCreditService extends HpsSoapGatewayService
 
     private function _submitTransaction($transaction, $txnType, $clientTxnId = null, $cardData = null)
     {
+        $options = array();
+        if ($clientTxnId != null) {
+            $options['clientTransactionId'] = $clientTxnId;
+        }
+
         try {
-            $response = $this->doTransaction($transaction, $clientTxnId);
+            $response = $this->doRequest($transaction, $options);
         } catch (HpsException $e) {
             if ($e->innerException != null && $e->innerException->getMessage() == 'gateway_time-out') {
                 if (in_array($txnType, array('CreditSale', 'CreditAuth'))) {

@@ -105,8 +105,8 @@ class Hps_Securesubmit_Model_Paypal extends Mage_Payment_Model_Method_Cc
         if (Mage::getStoreConfig('payment/hps_paypal/use_http_proxy')) {
             $config->useProxy = true;
             $config->proxyOptions = array(
-                'proxy_host' => Mage::getStoreConfig('payment/hps_paypal/http_proxy_host'),
                 'proxy_port' => Mage::getStoreConfig('payment/hps_paypal/http_proxy_port'),
+                'proxy_host' => Mage::getStoreConfig('payment/hps_paypal/http_proxy_host'),
             );
         }
 
@@ -132,9 +132,9 @@ class Hps_Securesubmit_Model_Paypal extends Mage_Payment_Model_Method_Cc
         $buyer->emailAddress = $shipping->getData('email');
 
         $paymentData = new HpsPaymentData();
-        $paymentData->subtotal = $subtotal;
-        $paymentData->shippingAmount = $shippingAmount;
-        $paymentData->taxAmount = $taxAmount;
+        $paymentData->subtotal = sprintf("%0.2f", round($subtotal, 3));
+        $paymentData->shippingAmount = sprintf("%0.2f", round($shippingAmount, 3));
+        $paymentData->taxAmount = sprintf("%0.2f", round($taxAmount, 3));
 
         $shippingInfo = new HpsShippingInfo();
         $shippingInfo->name = $billing->getData('firstname') . ' ' . $billing->getData('lastname');
@@ -201,6 +201,15 @@ class Hps_Securesubmit_Model_Paypal extends Mage_Payment_Model_Method_Cc
             $payment->setCcTransId($response->transactionId);
             $payment->setTransactionId($response->transactionId);
             $payment->setIsTransactionClosed(0);
+
+
+            // $info = new Varien_Object(
+            //     $this->getInfoInstance()->getAdditionalData() ?
+            //     unserialize($this->getInfoInstance()->getAdditionalData()) :
+            //     null
+            // );
+            // $info->setBuyerEmailAddress($shipping->getData('email'));
+            // $this->getInfoInstance()->setAdditionalData(serialize($info));
         }
         catch (HpsProcessorException $e) {
             $this->_debugChargeService($payPalService, $e);
@@ -404,9 +413,7 @@ class Hps_Securesubmit_Model_Paypal extends Mage_Payment_Model_Method_Cc
             $config->deviceId  = Mage::getStoreConfig('payment/hps_paypal/device_id');
             $config->licenseId = Mage::getStoreConfig('payment/hps_paypal/license_id');
             $config->siteId    = Mage::getStoreConfig('payment/hps_paypal/site_id');
-            $config->soapServiceUri = "https://posgateway.secureexchange.net/Hps.Exchange.PosGateway/PosGatewayService.asmx";
-            //$config->soapServiceUri  = "https://api-uat.heartlandportico.com/paymentserver.v1/PosGatewayService.asmx";
-            //$config->soapServiceUri = "https://api-uat.heartlandportico.com/paymentserver.HotFix/POSGatewayService.asmx";
+            $config->soapServiceUri  = "https://api-uat.heartlandportico.com/paymentserver.v1/PosGatewayService.asmx";
         } else {
             $config->secretApiKey = Mage::getStoreConfig('payment/hps_paypal/secretapikey');
         }

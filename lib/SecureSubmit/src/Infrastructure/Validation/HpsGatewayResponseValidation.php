@@ -34,7 +34,6 @@ class HpsGatewayResponseValidation
                 );
                 break;
             case '3':
-                print_r($response);
                 $e = new HpsGatewayException(
                     HpsExceptionCodes::INVALID_ORIGINAL_TRANSACTION,
                     $responseText,

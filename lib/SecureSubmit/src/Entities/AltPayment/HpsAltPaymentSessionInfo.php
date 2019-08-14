@@ -1,6 +1,6 @@
 <?php
 
-class HpsAltPaymentSessionInfo extends HpsAuthorization
+class HpsAltPaymentSessionInfo extends HpsAltPaymentResponse
 {
     /** @var string|null */
     public $status    = null;
@@ -59,14 +59,5 @@ class HpsAltPaymentSessionInfo extends HpsAuthorization
         $lineItem->taxAmount = isset($lineItems['TaxAmount']) ? $lineItems['TaxAmount'] : null;
 
         return $session;
-    }
-
-    protected static function nvpToArray($pairs)
-    {
-        $array = array();
-        foreach ($pairs->NameValuePair as $pair) {
-            $array[(string)$pair->Name] = (string)$pair->Value;
-        }
-        return $array;
     }
 }

@@ -15,6 +15,7 @@ class Hps_SecureSubmit_Block_Paypal_Info extends Mage_Payment_Block_Info
         $info = $this->getInfo();
 
         $data[Mage::helper("payment")->__("Payment Type")] = "PayPal";
+        //$data[Mage::helper('payment')->__('Email Address')] = print_r($info, true);
 
         return $transport->setData(array_merge($data, $transport->getData()));
     }
