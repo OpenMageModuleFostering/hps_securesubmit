@@ -1,0 +1,16 @@
+{
+    "name": "OpenMageModuleFostering/Hps_Securesubmit",
+    "type": "magento-module",
+    "license": "Custom",
+    "homepage": "",
+    "description": "Take credit card payments and store cards in a PCI friendly way.",
+    "authors": [
+    {
+        "name": "Heartland Payment Systems",
+        "email": "mark.hagan@e-hps.com"
+    }
+],
+    "suggest": {
+        "magento-hackathon/magento-composer-installer": "*"
+    }
+}

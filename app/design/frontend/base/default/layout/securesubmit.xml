@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+
+<layout version="0.1.0">
+    <onestepcheckout_index_index>
+        <reference name="head">
+            <action method="addJs"><file>securesubmit/secure.submit-1.0.1.js</file></action>
+        </reference>
+    </onestepcheckout_index_index>
+    <checkout_onepage_index>
+        <reference name="head">
+            <action method="addJs"><file>securesubmit/secure.submit-1.0.1.js</file></action>
+        </reference>
+    </checkout_onepage_index>
+    <customer_account>
+        <reference name="customer_account_navigation">
+          <action method="addLink" >
+            <name>save_token</name>
+            <path>securesubmit/storedcard/index</path>
+            <label>Manage Cards</label>
+          </action>
+        </reference>
+    </customer_account>
+
+    <hps_securesubmit_storedcard_index>
+        <update handle="customer_account" />
+        <reference name="my.account.wrapper">
+            <block type="core/template" name="hps_securesubmit_content" template="securesubmit/storedcards.phtml"/>
+        </reference>
+    </hps_securesubmit_storedcard_index>
+</layout>
