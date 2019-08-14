@@ -10,7 +10,9 @@ function securesubmitMultishipping(multiForm) {
 
             // Use stored card checked, get existing token data
             if (this.secureSubmitUseStoredCard()) {
-                var storedcardId = $$('[name="hps_securesubmit_stored_card_select"]:checked')[0].value;
+                var radio = $$('[name="hps_securesubmit_stored_card_select"]:checked')[0];
+                var storedcardId = radio.value;
+                var storedcardType = $(radio.id + '_card_type').value;
 
                 new Ajax.Request(this.secureSubmitGetTokenDataUrl, {
                     method: 'post',
@@ -22,6 +24,7 @@ function securesubmitMultishipping(multiForm) {
                             $('hps_securesubmit_cc_exp_year').value = data.token.cc_exp_year;
                         }
                         this.secureSubmitResponseHandler({
+                            card_type:    storedcardType,
                             token_value:  data.token.token_value,
                             token_type:   null, // 'supt'?
                             token_expire: new Date().toISOString(),
@@ -46,9 +49,12 @@ function securesubmitMultishipping(multiForm) {
                 } else {
                     var validator = new Validation(multiForm);
                     if (validator.validate()) {
-                        var date = $('hps_securesubmit_exp_date').value.split('/');
-                        $('hps_securesubmit_cc_exp_month').value = date[0].trim();
-                        $('hps_securesubmit_cc_exp_year').value = date[1].trim();
+                        if ($('hps_securesubmit_exp_date').value) {
+                            var date = $('hps_securesubmit_exp_date').value.split('/');
+                            $('hps_securesubmit_cc_exp_month').value = date[0].trim();
+                            $('hps_securesubmit_cc_exp_year').value = date[1].trim();
+                        }
+
                         (new Heartland.HPS({
                             publicKey: this.secureSubmitPublicKey,
                             cardNumber: $('hps_securesubmit_cc_number').value,
@@ -68,11 +74,15 @@ function securesubmitMultishipping(multiForm) {
         },
         secureSubmitResponseHandler: function (response) {
             var tokenField = $('hps_securesubmit_token'),
+                typeField = $('hps_securesubmit_cc_type'),
                 lastFourField = $('hps_securesubmit_cc_last_four');
-            var date = $('hps_securesubmit_exp_date').value.split('/');
-            $('hps_securesubmit_cc_exp_month').value = date[0].trim();
-            $('hps_securesubmit_cc_exp_year').value = date[1].trim();
-            tokenField.value = lastFourField.value = null;
+            tokenField.value = typeField.value = lastFourField.value = null;
+
+            if ($('hps_securesubmit_exp_date').value) {
+                var date = $('hps_securesubmit_exp_date').value.split('/');
+                $('hps_securesubmit_cc_exp_month').value = date[0].trim();
+                $('hps_securesubmit_cc_exp_year').value = date[1].trim();
+            }
 
             if (SecureSubmitMagento.skipCreditCard) {
                 SecureSubmitMagento.completeCheckout();
@@ -86,6 +96,7 @@ function securesubmitMultishipping(multiForm) {
             } else if (response && response.token_value) {
                 tokenField.value = response.token_value;
                 lastFourField.value = response.card.number.substr(-4);
+                typeField.value = response.card_type;
 
                 // Continue Magento checkout steps
                 document.getElementById('payment-continue').enable();
@@ -116,7 +127,9 @@ document.observe('dom:loaded', function () {
 
                 // Use stored card checked, get existing token data
                 if (this.secureSubmitUseStoredCard()) {
-                    var storedcardId = $$('[name="hps_securesubmit_stored_card_select"]:checked')[0].value;
+                    var radio = $$('[name="hps_securesubmit_stored_card_select"]:checked')[0];
+                    var storedcardId = radio.value;
+                    var storedcardType = $(radio.id + '_card_type').value;
                     checkout.setLoadWaiting('payment');
                     new Ajax.Request(this.secureSubmitGetTokenDataUrl, {
                         method: 'post',
@@ -128,6 +141,7 @@ document.observe('dom:loaded', function () {
                                 $('hps_securesubmit_cc_exp_year').value = data.token.cc_exp_year;
                             }
                             this.secureSubmitResponseHandler({
+                                card_type:    storedcardType,
                                 token_value:  data.token.token_value,
                                 token_type:   null, // 'supt'?
                                 token_expire: new Date().toISOString(),
@@ -155,9 +169,13 @@ document.observe('dom:loaded', function () {
                         var validator = new Validation(this.form);
                         if (this.validate() && validator.validate()) {
                             checkout.setLoadWaiting('payment');
-                            var date = $('hps_securesubmit_exp_date').value.split('/');
-                            $('hps_securesubmit_cc_exp_month').value = date[0].trim();
-                            $('hps_securesubmit_cc_exp_year').value = date[1].trim();
+
+                            if ($('hps_securesubmit_exp_date').value) {
+                                var date = $('hps_securesubmit_exp_date').value.split('/');
+                                $('hps_securesubmit_cc_exp_month').value = date[0].trim();
+                                $('hps_securesubmit_cc_exp_year').value = date[1].trim();
+                            }
+
                             (new Heartland.HPS({
                                 publicKey: this.secureSubmitPublicKey,
                                 cardNumber: $('hps_securesubmit_cc_number').value,
@@ -177,11 +195,15 @@ document.observe('dom:loaded', function () {
             },
             secureSubmitResponseHandler: function (response) {
                 var tokenField = $('hps_securesubmit_token'),
+                    typeField = $('hps_securesubmit_cc_type'),
                     lastFourField = $('hps_securesubmit_cc_last_four');
-                var date = $('hps_securesubmit_exp_date').value.split('/');
-                $('hps_securesubmit_cc_exp_month').value = date[0].trim();
-                $('hps_securesubmit_cc_exp_year').value = date[1].trim();
-                tokenField.value = lastFourField.value = null;
+                tokenField.value = typeField.value = lastFourField.value = null;
+
+                if ($('hps_securesubmit_exp_date').value) {
+                    var date = $('hps_securesubmit_exp_date').value.split('/');
+                    $('hps_securesubmit_cc_exp_month').value = date[0].trim();
+                    $('hps_securesubmit_cc_exp_year').value = date[1].trim();
+                }
 
                 if (SecureSubmitMagento.skipCreditCard) {
                     SecureSubmitMagento.completeCheckout();
@@ -196,6 +218,7 @@ document.observe('dom:loaded', function () {
                 } else if (response && response.token_value) {
                     tokenField.value = response.token_value;
                     lastFourField.value = response.card.number.substr(-4);
+                    typeField.value = response.card_type;
 
                     // Continue Magento checkout steps
                     new Ajax.Request(this.saveUrl, {
@@ -230,9 +253,12 @@ document.observe('dom:loaded', function () {
                         message: SecureSubmitMagento.options.publicKey
                     }, 'cardNumber');
                 } else {
-                    var date = $('hps_securesubmit_exp_date').value.split('/');
-                    $('hps_securesubmit_cc_exp_month').value = date[0].trim();
-                    $('hps_securesubmit_cc_exp_year').value = date[1].trim();
+                    if ($('hps_securesubmit_exp_date').value) {
+                        var date = $('hps_securesubmit_exp_date').value.split('/');
+                        $('hps_securesubmit_cc_exp_month').value = date[0].trim();
+                        $('hps_securesubmit_cc_exp_year').value = date[1].trim();
+                    }
+
                     (new Heartland.HPS({
                         publicKey: this.secureSubmitPublicKey,
                         cardNumber: $('hps_securesubmit_cc_number').value,
@@ -246,11 +272,15 @@ document.observe('dom:loaded', function () {
             },
             secureSubmitResponseHandler: function (response) {
                 var tokenField = $('hps_securesubmit_token'),
+                    typeField = $('hps_securesubmit_cc_type'),
                     lastFourField = $('hps_securesubmit_cc_last_four');
-                var date = $('hps_securesubmit_exp_date').value.split('/');
-                $('hps_securesubmit_cc_exp_month').value = date[0].trim();
-                $('hps_securesubmit_cc_exp_year').value = date[1].trim();
-                tokenField.value = lastFourField.value = null;
+                tokenField.value = typeField.value = lastFourField.value = null;
+
+                if ($('hps_securesubmit_exp_date').value) {
+                    var date = $('hps_securesubmit_exp_date').value.split('/');
+                    $('hps_securesubmit_cc_exp_month').value = date[0].trim();
+                    $('hps_securesubmit_cc_exp_year').value = date[1].trim();
+                }
 
                 if (SecureSubmitMagento.skipCreditCard) {
                     SecureSubmitMagento.completeCheckout();
@@ -265,6 +295,7 @@ document.observe('dom:loaded', function () {
                 } else if (response && response.token_value) {
                     tokenField.value = response.token_value;
                     lastFourField.value = response.card.number.substr(-4);
+                    typeField.value = response.card_type;
 
                     this.setLoadWaiting(true);
                     var params = Form.serialize(this.form);
@@ -306,7 +337,9 @@ document.observe('dom:loaded', function () {
                 $('onestepcheckout-button-place-order').removeClassName('place-order-loader');
                 $('onestepcheckout-button-place-order').addClassName('onestepcheckout-btn-checkout');
                 if (secureSubmitUseStoredCardOSC()) {
-                    var storedcardId = $('hps_securesubmit_stored_card_select').value;
+                    var radio = $$('[name="hps_securesubmit_stored_card_select"]:checked')[0];
+                    var storedcardId = radio.value;
+                    var storedcardType = $(radio.id + '_card_type').value;
                     new Ajax.Request(window.payment.secureSubmitGetTokenDataUrlOSC, {
                       method: 'post',
                       parameters: {storedcard_id: storedcardId},
@@ -317,6 +350,7 @@ document.observe('dom:loaded', function () {
                               $('hps_securesubmit_expiration_yr').value = data.token.cc_exp_year;
                           }
                           secureSubmitResponseHandlerOSC({
+                              card_type:    storedcardType,
                               token_value:  data.token.token_value,
                               token_type:   null, // 'supt'?
                               token_expire: new Date().toISOString(),
@@ -340,9 +374,12 @@ document.observe('dom:loaded', function () {
                             message: SecureSubmitMagento.options.publicKey
                         }, 'cardNumber');
                     } else {
-                        var date = $('hps_securesubmit_exp_date').value.split('/');
-                        $('hps_securesubmit_cc_exp_month').value = date[0].trim();
-                        $('hps_securesubmit_cc_exp_year').value = date[1].trim();
+                        if ($('hps_securesubmit_exp_date').value) {
+                            var date = $('hps_securesubmit_exp_date').value.split('/');
+                            $('hps_securesubmit_cc_exp_month').value = date[0].trim();
+                            $('hps_securesubmit_cc_exp_year').value = date[1].trim();
+                        }
+
                         (new Heartland.HPS({
                             publicKey: window.payment.secureSubmitPublicKeyOSC,
                             cardNumber: $('hps_securesubmit_cc_number').value,
@@ -368,8 +405,15 @@ document.observe('dom:loaded', function () {
 
         secureSubmitResponseHandlerOSC = function (response, btn) {
             var tokenField = $('hps_securesubmit_token'),
+                typeField = $('hps_securesubmit_cc_type'),
                 lastFourField = $('hps_securesubmit_cc_last_four');
-            tokenField.value = lastFourField.value = null;
+            tokenField.value = typeField.value = lastFourField.value = null;
+
+            if ($('hps_securesubmit_exp_date').value) {
+                var date = $('hps_securesubmit_exp_date').value.split('/');
+                $('hps_securesubmit_cc_exp_month').value = date[0].trim();
+                $('hps_securesubmit_cc_exp_year').value = date[1].trim();
+            }
 
             if (SecureSubmitMagento.skipCreditCard) {
                 SecureSubmitMagento.completeCheckout();
@@ -387,6 +431,7 @@ document.observe('dom:loaded', function () {
             } else if (response && response.token_value) {
                 tokenField.value = response.token_value;
                 lastFourField.value = response.card.number.substr(-4);
+                typeField.value = response.card_type;
 
                 $('onestepcheckout-place-order-loading').show();
                 $('onestepcheckout-button-place-order').removeClassName('onestepcheckout-btn-checkout');
@@ -425,9 +470,12 @@ document.observe('dom:loaded', function () {
                         message: SecureSubmitMagento.options.publicKey
                     }, 'cardNumber');
                 } else {
-                    var date = $('hps_securesubmit_exp_date').value.split('/');
-                    $('hps_securesubmit_cc_exp_month').value = date[0].trim();
-                    $('hps_securesubmit_cc_exp_year').value = date[1].trim();
+                    if ($('hps_securesubmit_exp_date').value) {
+                        var date = $('hps_securesubmit_exp_date').value.split('/');
+                        $('hps_securesubmit_cc_exp_month').value = date[0].trim();
+                        $('hps_securesubmit_cc_exp_year').value = date[1].trim();
+                    }
+
                     (new Heartland.HPS({
                         publicKey: this.secureSubmitPublicKey,
                         cardNumber: $('hps_securesubmit_cc_number').value,
@@ -441,8 +489,15 @@ document.observe('dom:loaded', function () {
             },
             secureSubmitResponseHandler: function (response) {
                 var tokenField = $('hps_securesubmit_token'),
+                    typeField = $('hps_securesubmit_cc_type'),
                     lastFourField = $('hps_securesubmit_cc_last_four');
-                tokenField.value = lastFourField.value = null;
+                tokenField.value = typeField.value = lastFourField.value = null;
+
+                if ($('hps_securesubmit_exp_date').value) {
+                    var date = $('hps_securesubmit_exp_date').value.split('/');
+                    $('hps_securesubmit_cc_exp_month').value = date[0].trim();
+                    $('hps_securesubmit_cc_exp_year').value = date[1].trim();
+                }
 
                 if (SecureSubmitMagento.skipCreditCard) {
                     SecureSubmitMagento.completeCheckout();
@@ -457,6 +512,7 @@ document.observe('dom:loaded', function () {
                 } else if (response && response.token_value) {
                     tokenField.value = response.token_value;
                     lastFourField.value = response.card.number.substr(-4);
+                    typeField.value = response.card_type;
 
                     var form = $j_opc('#co-payment-form').serializeArray();
                     IWD.OPC.Checkout.xhr = $j_opc.post(
@@ -670,7 +726,7 @@ document.observe('dom:loaded', function () {
                     onSuccess: checkout.setResponse.bind(checkout),
                     onFailure: checkout.ajaxFailure.bind(checkout)
                 });
-            } else if (typeof IWD.OPC !== 'undefined') {
+            } else if (typeof IWD !== 'undefined' && typeof IWD.OPC !== 'undefined') {
                 var form = $j_opc('#co-payment-form').serializeArray();
                 IWD.OPC.Checkout.xhr = $j_opc.post(
                     IWD.OPC.Checkout.config.baseUrl + 'onepage/json/savePayment',
