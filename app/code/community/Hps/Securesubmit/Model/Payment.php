@@ -185,12 +185,14 @@ class Hps_Securesubmit_Model_Payment extends Mage_Payment_Model_Method_Cc
         try {
             $this->checkVelocity();
 
+            $captureBuilder = false;
             $builder = null;
             if ($capture) {
                 if ($payment->getCcTransId()) {
                     $builder = $chargeService->capture()
                         ->withTransactionId($payment->getCcTransId())
                         ->withAmount();
+                    $captureBuilder = true;
                 } else {
                     $builder = $chargeService->charge()
                         ->withAmount($amount)
@@ -210,7 +212,7 @@ class Hps_Securesubmit_Model_Payment extends Mage_Payment_Model_Method_Cc
                     ->withDetails($details);
             }
 
-            if (null !== $secureEcommerce) {
+            if (false === $captureBuilder && null !== $secureEcommerce) {
                 $builder = $builder->withSecureEcommerce($secureEcommerce);
             }
 
@@ -339,7 +341,7 @@ class Hps_Securesubmit_Model_Payment extends Mage_Payment_Model_Method_Cc
         if ($this->getConfigData('enable_threedsecure')
             && false !== ($data = json_decode($ccaData))
             && isset($data) && isset($data->ActionCode)
-            && in_array($data->ActionCode, array('SUCCESS', 'NOACTION'))
+            && 'SUCCESS' === $data->ActionCode
         ) {
             $dataSource = '';
             switch ($cardType) {
@@ -545,7 +547,7 @@ class Hps_Securesubmit_Model_Payment extends Mage_Payment_Model_Method_Cc
         }
 
         $service = $this->_getChargeService();
-        return $service->get($transactionId)->execute();
+        return $service->get($transactionId);
     }
 
 
